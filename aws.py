@@ -443,10 +443,50 @@ with open('pca.pkl', 'rb') as file:
      pca = joblib.load(file)
 
 
-from sklearn.decomposition import PCA
-t=get('https://www.youtube.com/')
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
-X = np.array(t).reshape(1, -1)
-#X_pca=pca.transform(X)
-y = loaded_model.predict(X)
-print(y)
+# Define input schema for the FastAPI POST request
+class URLModel(BaseModel):
+    url: str
+
+app = FastAPI()
+
+# Allow CORS for frontend integration
+origins = [
+    "http://localhost",
+    "http://localhost:3000",
+    "http://localhost:5000"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# The predict function to process the URL and use the loaded model
+@app.post("/predict/")
+async def predict(data: URLModel):
+    # Extract features from the URL
+    features = get(data.url)
+    
+    # Convert the extracted features into a numpy array for PCA transformation
+    X = np.array(features).reshape(1, -1)
+    
+    # Apply PCA to reduce the dimensionality of the feature set
+    X_pca = pca.transform(X)
+    
+    # Use the loaded model to predict whether the URL is phishing or benign
+    prediction = loaded_model.predict(X_pca)
+    
+    # Return the result
+    return {"prediction": int(prediction[0])}
+
+# Run the FastAPI server (if running this file directly)
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
