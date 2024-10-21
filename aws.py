@@ -435,58 +435,53 @@ def get(url):
     
     return results
 
+# import joblib
+# with open('model.pkl', 'rb') as file:
+#     loaded_model = joblib.load(file)
+
+# with open('pca.pkl', 'rb') as file:
+#      pca = joblib.load(file)
+
+
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 import joblib
+
+# Initialize the FastAPI app
+app = FastAPI()
+
+# Allow CORS for all origins (modify as needed)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # You can specify the allowed origins here
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Define input schema for the FastAPI POST request
+class URLModel(BaseModel):
+    url: str
+
+# Load the model and PCA
 with open('model.pkl', 'rb') as file:
     loaded_model = joblib.load(file)
 
 with open('pca.pkl', 'rb') as file:
      pca = joblib.load(file)
 
+@app.post("/analyze-url/")
+async def analyze_url(url_model: URLModel):
+    try:
+        url = url_model.url
+        results = get(url)  # Call your existing get function
+        
+        # Prepare a response
+        response = {
+            "results": results
+        }
+        return response
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-
-# Define input schema for the FastAPI POST request
-class URLModel(BaseModel):
-    url: str
-
-app = FastAPI()
-
-# Allow CORS for frontend integration
-origins = [
-    "http://localhost",
-    "http://localhost:3000",
-    "http://localhost:5000"
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# The predict function to process the URL and use the loaded model
-@app.post("/predict/")
-async def predict(data: URLModel):
-    # Extract features from the URL
-    features = get(data.url)
-    
-    # Convert the extracted features into a numpy array for PCA transformation
-    X = np.array(features).reshape(1, -1)
-    
-    # Apply PCA to reduce the dimensionality of the feature set
-    X_pca = pca.transform(X)
-    
-    # Use the loaded model to predict whether the URL is phishing or benign
-    prediction = loaded_model.predict(X_pca)
-    
-    # Return the result
-    return {"prediction": int(prediction[0])}
-
-# Run the FastAPI server (if running this file directly)
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
