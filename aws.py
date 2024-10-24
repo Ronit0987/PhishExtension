@@ -426,6 +426,8 @@ def get(url):
     #results.append(similarity_score)
     reference_file_path = "13_dom_tree.html"
     results.append(cal_similarity_score2(html_content,reference_file_path))
+    return results
+
     
     # Call extract_features and append result to list
     
@@ -465,7 +467,7 @@ class URLModel(BaseModel):
     url: str
 
 # Load the model and PCA
-with open('model.pkl', 'rb') as file:
+with open('new_rf_model.pkl', 'rb') as file:
     loaded_model = joblib.load(file)
 
 with open('pca.pkl', 'rb') as file:
@@ -475,11 +477,14 @@ with open('pca.pkl', 'rb') as file:
 async def analyze_url(url_model: URLModel):
     try:
         url = url_model.url
-        results = get(url)  # Call your existing get function
-        
+        results = get(url) 
+         # Call your existing get function
+        X = np.array(results).reshape(1, -1)
+        print(X)
+        y = loaded_model.predict(X)
         # Prepare a response
         response = {
-            "results": results
+            "results": y
         }
         return response
 
