@@ -106,8 +106,13 @@ import os
 def get_dom1(url):
 # Configure Chrome options
     chrome_options = Options()
-    chrome_options.add_argument("--headless")  # Run Chrome in headless mode (no GUI)
-    chrome_options.add_argument("--disable-gpu")  # Disable GPU acceleration
+    options.add_argument("--headless")  # Run in headless mode
+    options.add_argument("--no-sandbox")  # Disable sandboxing (required for headless)
+    options.add_argument("--disable-dev-shm-usage")  # Overcome limited resource problems
+    options.add_argument("--disable-gpu")  # Disable GPU (not necessary for headless)
+    options.add_argument("--remote-debugging-port=9222")  # Allows for remote debugging
+    options.add_argument("window-size=1280,800")
+
 # Initialize Chrome WebDriver
     options = webdriver.ChromeOptions()
     options.binary_location = "/usr/bin/google-chrome" 
