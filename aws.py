@@ -146,53 +146,53 @@ def read_html_file(file_path):
         return file.read()
 
 # Function to compute TF-IDF scores of HTML tags from a file
-def tf_idf_tags(html_content):
-    # Check if HTML content is empty
-    if not html_content.strip():
-        return {}  # Return an empty dictionary if content is empty
+# def tf_idf_tags(html_content):
+#     # Check if HTML content is empty
+#     if not html_content.strip():
+#         return {}  # Return an empty dictionary if content is empty
 
-    # Parse the HTML content
-    soup = BeautifulSoup(html_content, 'html.parser')
+#     # Parse the HTML content
+#     soup = BeautifulSoup(html_content, 'html.parser')
 
-    # Extract tags from the DOM tree
-    tags = [tag.name for tag in soup.find_all()]
+#     # Extract tags from the DOM tree
+#     tags = [tag.name for tag in soup.find_all()]
 
-    # Convert tags to string for TF-IDF computation
-    tag_string = ' '.join(tags)
+#     # Convert tags to string for TF-IDF computation
+#     tag_string = ' '.join(tags)
 
-    # Compute TF-IDF scores
-    tfidf = TfidfVectorizer()
-    tfidf_matrix = tfidf.fit_transform([tag_string])
+#     # Compute TF-IDF scores
+#     tfidf = TfidfVectorizer()
+#     tfidf_matrix = tfidf.fit_transform([tag_string])
 
-    # Get feature names (tags)
-    feature_names = tfidf.get_feature_names_out()
+#     # Get feature names (tags)
+#     feature_names = tfidf.get_feature_names_out()
 
-    # Create a dictionary to store TF-IDF scores for each tag
-    tag_tfidf_scores = {}
-    for tag, score in zip(feature_names, tfidf_matrix.toarray()[0]):
-        tag_tfidf_scores[tag] = score
-    return tag_tfidf_scores
+#     # Create a dictionary to store TF-IDF scores for each tag
+#     tag_tfidf_scores = {}
+#     for tag, score in zip(feature_names, tfidf_matrix.toarray()[0]):
+#         tag_tfidf_scores[tag] = score
+#     return tag_tfidf_scores
 file_path="13_dom_tree.html"
 html_content1 = read_html_file(file_path)
-res=tf_idf_tags(html_content1)
-def cal_similarity_score(tf_idf_tag):
-    #file_path1 = "F://React_projs2//DOM_scraping_major_proj//dom_trees_new_phish//" + str(idx) + "_dom_tree.html"
-    #tf_idf_tag = tf_idf_tags(file_path1)
+# res=tf_idf_tags(html_content1)
+# def cal_similarity_score(tf_idf_tag):
+#     #file_path1 = "F://React_projs2//DOM_scraping_major_proj//dom_trees_new_phish//" + str(idx) + "_dom_tree.html"
+#     #tf_idf_tag = tf_idf_tags(file_path1)
 
-    # Check if tf_idf_tag is empty
-    if not tf_idf_tag:
-        return 0  # Return 0 similarity score if tf_idf_tag is empty
+#     # Check if tf_idf_tag is empty
+#     if not tf_idf_tag:
+#         return 0  # Return 0 similarity score if tf_idf_tag is empty
    
-    # Get tags from the reference document
-    tags = set(res.keys()).union(set(tf_idf_tag.keys()))
+#     # Get tags from the reference document
+#     tags = set(res.keys()).union(set(tf_idf_tag.keys()))
 
-    # Compute TF-IDF vectors for both documents
-    vector_page1 = np.array([res.get(tag, 0) for tag in tags]).reshape(1, -1)
-    vector_page2 = np.array([tf_idf_tag.get(tag, 0) for tag in tags]).reshape(1, -1)
+#     # Compute TF-IDF vectors for both documents
+#     vector_page1 = np.array([res.get(tag, 0) for tag in tags]).reshape(1, -1)
+#     vector_page2 = np.array([tf_idf_tag.get(tag, 0) for tag in tags]).reshape(1, -1)
 
-    # Compute cosine similarity
-    similarity_score = cosine_similarity(vector_page1, vector_page2)[0][0]
-    return similarity_score
+#     # Compute cosine similarity
+#     similarity_score = cosine_similarity(vector_page1, vector_page2)[0][0]
+#     return similarity_score
 import re
 def extract_features(html_content):
     features = {}
@@ -439,7 +439,7 @@ def get(url):
     results.append(features['num_external_hyperlinks'])
     results.append(features['num_js_events'])
     # Call tf_idf_tags and append result to list
-    tf_idf_result = tf_idf_tags(html_content)
+  #  tf_idf_result = tf_idf_tags(html_content)
     
     
     # Call cal_similarity_score and append result to list
@@ -487,27 +487,23 @@ app.add_middleware(
 class URLModel(BaseModel):
     url: str
 
+class PredictionResponse(BaseModel):
+    results: int  # Adjust this type if y is a different type, like list or float
 # Load the model and PCA
-with open('new_rf_model.pkl', 'rb') as file:
+with open('F:\\React_projs2\\scaling_major_proj\\final_rf.joblib', 'rb') as file:
     loaded_model = joblib.load(file)
-
-with open('pca.pkl', 'rb') as file:
-     pca = joblib.load(file)
 
 @app.post("/analyze-url/")
 async def analyze_url(url_model: URLModel):
     try:
         url = url_model.url
-        results = get(url) 
-         # Call your existing get function
+        results = get(url)  # Retrieve features from the URL
         X = np.array(results).reshape(1, -1)
-        print(X)
-        y = loaded_model.predict(X)
-        # Prepare a response
-        response = {
-            "results": y
-        }
-        return response
-
+        
+        # Get prediction and make sure it's serializable
+        y = loaded_model.predict(X) # Extract single prediction if `y` is an array
+        
+        # Prepare a response using the PredictionResponse model
+        return PredictionResponse(results=int(y))  # Convert to int if needed
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return {"error": str(e)}
