@@ -490,7 +490,7 @@ class URLModel(BaseModel):
 class PredictionResponse(BaseModel):
     results: int  # Adjust this type if y is a different type, like list or float
 # Load the model and PCA
-with open('F:\\React_projs2\\scaling_major_proj\\final_rf.joblib', 'rb') as file:
+with open('final_rf.joblib', 'rb') as file:
     loaded_model = joblib.load(file)
 
 @app.post("/analyze-url/")
