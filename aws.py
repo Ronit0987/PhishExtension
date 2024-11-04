@@ -96,6 +96,8 @@ def having_ip_address(url):
     
     
 from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import TimeoutException, WebDriverException
@@ -107,7 +109,9 @@ def get_dom1(url):
     chrome_options.add_argument("--headless")  # Run Chrome in headless mode (no GUI)
     chrome_options.add_argument("--disable-gpu")  # Disable GPU acceleration
 # Initialize Chrome WebDriver
-    driver = webdriver.Chrome(options=chrome_options)
+    options = webdriver.ChromeOptions()
+    options.binary_location = "/usr/bin/google-chrome" 
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
     driver.set_page_load_timeout(15)  # Timeout set to 10 seconds
 # Create a directory to save DOM tree file        # Open the URL with a timeout
     try:
