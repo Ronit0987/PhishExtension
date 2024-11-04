@@ -106,6 +106,7 @@ import os
 def get_dom1(url):
 # Configure Chrome options
     chrome_options = Options()
+    options = webdriver.ChromeOptions()
     options.add_argument("--headless")  # Run in headless mode
     options.add_argument("--no-sandbox")  # Disable sandboxing (required for headless)
     options.add_argument("--disable-dev-shm-usage")  # Overcome limited resource problems
@@ -114,7 +115,7 @@ def get_dom1(url):
     options.add_argument("window-size=1280,800")
 
 # Initialize Chrome WebDriver
-    options = webdriver.ChromeOptions()
+    
     options.binary_location = "/usr/bin/google-chrome" 
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
     driver.set_page_load_timeout(15)  # Timeout set to 10 seconds
